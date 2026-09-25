@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+/* --------------------------------------------------
+   GLOBAL INTERACTIVE CURSORS
+-------------------------------------------------- */
+
+button:not(:disabled),
+a[href],
+select:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+[role="link"]:not([aria-disabled="true"]),
+input[type="button"]:not(:disabled),
+input[type="submit"]:not(:disabled),
+input[type="reset"]:not(:disabled) {
+  cursor: pointer;
+}
+
+/* Disabled interactive elements */
+button:disabled,
+select:disabled,
+input[type="button"]:disabled,
+input[type="submit"]:disabled,
+input[type="reset"]:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
+}
