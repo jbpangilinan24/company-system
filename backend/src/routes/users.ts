@@ -6,6 +6,8 @@ import bcrypt from 'bcrypt'
 
 const router = Router()
 
+const MIN_PASSWORD_LENGTH = 8
+
 // --------------------------------------------------
 // GET ACTIVE USERS FOR TASK ASSIGNMENT
 // Admin + Member
@@ -108,6 +110,26 @@ router.post(
         })
       }
 
+      // trim() is only used for this check; the password
+      // itself is hashed unchanged.
+      if (
+        typeof password === 'string' &&
+        password.trim() === ''
+      ) {
+        return res.status(400).json({
+          message: 'Password cannot contain only whitespace',
+        })
+      }
+
+      if (
+        typeof password !== 'string' ||
+        password.length < MIN_PASSWORD_LENGTH
+      ) {
+        return res.status(400).json({
+          message: `Password must be at least ${MIN_PASSWORD_LENGTH} characters`,
+        })
+      }
+
       if (role !== 'ADMIN' && role !== 'MEMBER') {
         return res.status(400).json({
           message: 'Invalid user role',
@@ -187,6 +209,7 @@ router.patch(
         email,
         role,
         status,
+        password,
       } = req.body
 
       if (Number.isNaN(userId)) {
@@ -288,6 +311,41 @@ router.patch(
         })
       }
 
+      // Blank or missing password keeps the existing one.
+      // The password is hashed as-is (not trimmed).
+      let passwordHash: string | undefined
+
+      if (
+        password !== undefined &&
+        password !== null &&
+        password !== ''
+      ) {
+        // trim() is only used for this check; the password
+        // itself is hashed unchanged.
+        if (
+          typeof password === 'string' &&
+          password.trim() === ''
+        ) {
+          return res.status(400).json({
+            message: 'Password cannot contain only whitespace',
+          })
+        }
+
+        if (
+          typeof password !== 'string' ||
+          password.length < MIN_PASSWORD_LENGTH
+        ) {
+          return res.status(400).json({
+            message: `Password must be at least ${MIN_PASSWORD_LENGTH} characters`,
+          })
+        }
+
+        passwordHash = await bcrypt.hash(
+          password,
+          12
+        )
+      }
+
       const user = await prisma.user.update({
         where: {
           id: userId,
@@ -307,6 +365,10 @@ router.patch(
 
           ...(status !== undefined && {
             status,
+          }),
+
+          ...(passwordHash !== undefined && {
+            passwordHash,
           }),
         },
         select: {

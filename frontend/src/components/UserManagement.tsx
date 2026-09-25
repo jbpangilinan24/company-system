@@ -57,6 +57,9 @@ const emptyForm: UserForm = {
   status: 'ACTIVE',
 }
 
+// Must match MIN_PASSWORD_LENGTH in backend/src/routes/users.ts
+const MIN_PASSWORD_LENGTH = 8
+
 const userStatuses: UserStatus[] = [
   'ACTIVE',
   'INACTIVE',
@@ -447,6 +450,19 @@ function UserManagement() {
       return
     }
 
+    // When editing, a blank password keeps the current one.
+    if (
+      form.password &&
+      form.password.length <
+        MIN_PASSWORD_LENGTH
+    ) {
+      setFormMessage(
+        `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`
+      )
+
+      return
+    }
+
     try {
       setSaving(true)
 
@@ -473,6 +489,11 @@ function UserManagement() {
 
             status:
               form.status,
+
+            ...(form.password && {
+              password:
+                form.password,
+            }),
           }
         : {
             name:
@@ -1531,50 +1552,58 @@ function UserManagement() {
 
             </div>
 
-            {/* PASSWORD - CREATE ONLY */}
+            {/* PASSWORD - REQUIRED ON CREATE, OPTIONAL RESET ON EDIT */}
 
-            {!editingUser && (
-              <div className="sm:col-span-2">
+            <div className="sm:col-span-2">
 
-                <label
-                  htmlFor="user-password"
-                  className="mb-1.5 block text-sm font-medium text-slate-700"
-                >
-                  Password
+              <label
+                htmlFor="user-password"
+                className="mb-1.5 block text-sm font-medium text-slate-700"
+              >
+                {editingUser
+                  ? 'New password'
+                  : 'Password'}
 
+                {!editingUser && (
                   <span className="ml-1 text-red-500">
                     *
                   </span>
-                </label>
+                )}
+              </label>
 
-                <input
-                  id="user-password"
-                  type="password"
-                  value={
-                    form.password
-                  }
-                  onChange={(
-                    event
-                  ) =>
-                    setForm({
-                      ...form,
+              <input
+                id="user-password"
+                type="password"
+                value={
+                  form.password
+                }
+                onChange={(
+                  event
+                ) =>
+                  setForm({
+                    ...form,
 
-                      password:
-                        event.target
-                          .value,
-                    })
-                  }
-                  placeholder="Enter a secure password"
-                  autoComplete="new-password"
-                  className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm outline-none transition placeholder:text-slate-400 focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
-                />
+                    password:
+                      event.target
+                        .value,
+                  })
+                }
+                placeholder={
+                  editingUser
+                    ? 'Leave blank to keep the current password'
+                    : 'Enter a secure password'
+                }
+                autoComplete="new-password"
+                className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm outline-none transition placeholder:text-slate-400 focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+              />
 
-                <p className="mt-1.5 text-xs text-slate-400">
-                  This password will be used for the user's initial login.
-                </p>
+              <p className="mt-1.5 text-xs text-slate-400">
+                {editingUser
+                  ? `Enter a new password (at least ${MIN_PASSWORD_LENGTH} characters) to replace the user's current password.`
+                  : `This password will be used for the user's initial login. At least ${MIN_PASSWORD_LENGTH} characters.`}
+              </p>
 
-              </div>
-            )}
+            </div>
 
             {/* ROLE */}
 
