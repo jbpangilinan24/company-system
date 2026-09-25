@@ -19,9 +19,34 @@ const PORT = 3000
 
 app.use(express.json())
 
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+].filter(Boolean) as string[]
+
 app.use(
   cors({
-    origin: 'http://localhost:5173',
+    origin: (origin, callback) => {
+      // Allow requests without an Origin header
+      // e.g. Postman, curl, server-to-server requests
+      if (!origin) {
+        return callback(null, true)
+      }
+
+      // Allow the configured frontend URL
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true)
+      }
+
+      // Development: allow Vite running on localhost
+      if (
+        process.env.NODE_ENV !== 'production' &&
+        /^http:\/\/localhost:\d+$/.test(origin)
+      ) {
+        return callback(null, true)
+      }
+
+      return callback(new Error(`CORS blocked origin: ${origin}`))
+    },
     credentials: true,
   })
 )
