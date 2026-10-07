@@ -471,7 +471,11 @@ router.patch(
         parsedAssignedToId !== null &&
         parsedAssignedToId !== existingTask.assignedToId
 
-      if (assigneeChanged) {
+      if (
+        assigneeChanged &&
+        parsedAssignedToId !== undefined &&
+        parsedAssignedToId !== null
+      ) {
         await prisma.notification.create({
           data: {
             type: 'TASK_ASSIGNED',
