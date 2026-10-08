@@ -6,6 +6,7 @@ const router = Router()
 
 // --------------------------------------------------
 // GET ALL NOTIFICATIONS FOR CURRENT USER
+// Optional ?unread=true returns unread only.
 // --------------------------------------------------
 
 router.get(
@@ -23,10 +24,17 @@ router.get(
         })
       }
 
+      const unreadOnly =
+        req.query.unread === 'true'
+
       const notifications =
         await prisma.notification.findMany({
           where: {
             userId,
+
+            ...(unreadOnly && {
+              isRead: false,
+            }),
           },
 
           orderBy: {

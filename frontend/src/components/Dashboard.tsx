@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   Navigate,
   NavLink,
@@ -145,48 +145,87 @@ function Dashboard({
     setNotificationsLoading,
   ] = useState(false)
 
+  /*
+  * Tracks an in-progress notification request.
+  * A ref updates immediately, unlike state, so two
+  * quick calls can't both start a request.
+  */
+  const notificationsRequestInProgress =
+    useRef(false)
+
 
   // --------------------------------------------------
   // NOTIFICATIONS
   // --------------------------------------------------
 
   const loadNotifications = async () => {
+    // Skip if a refresh is already in progress.
+    if (notificationsRequestInProgress.current) {
+      return
+    }
+
     try {
+      notificationsRequestInProgress.current = true
+
       setNotificationsLoading(true)
 
-      const response = await fetch(
-        `${API_URL}/api/notifications`,
-        {
-          credentials: 'include',
-        }
-      )
+      /*
+      * The dropdown shows unread notifications only.
+      * The badge uses the server's count, which isn't
+      * limited to the 50 notifications in the list.
+      */
+      const [
+        notificationsResponse,
+        countResponse,
+      ] = await Promise.all([
+        fetch(
+          `${API_URL}/api/notifications?unread=true`,
+          {
+            credentials: 'include',
+          }
+        ),
 
-      const data = await response.json()
+        fetch(
+          `${API_URL}/api/notifications/unread-count`,
+          {
+            credentials: 'include',
+          }
+        ),
+      ])
 
-      if (!response.ok) {
+      const notificationsData =
+        await notificationsResponse.json()
+
+      const countData =
+        await countResponse.json()
+
+      if (!notificationsResponse.ok) {
         throw new Error(
-          data.message ||
+          notificationsData.message ||
             'Unable to load notifications'
         )
       }
 
+      if (!countResponse.ok) {
+        throw new Error(
+          countData.message ||
+            'Unable to load unread notification count'
+        )
+      }
+
       setNotifications(
-        data.notifications || []
+        notificationsData.notifications || []
       )
 
-      const unread =
-        (data.notifications || []).filter(
-          (notification: Notification) =>
-            !notification.isRead
-        ).length
-
-      setUnreadCount(unread)
+      setUnreadCount(countData.count ?? 0)
     } catch (error) {
       console.error(
         'LOAD NOTIFICATIONS ERROR:',
         error
       )
     } finally {
+      notificationsRequestInProgress.current = false
+
       setNotificationsLoading(false)
     }
   }
@@ -343,14 +382,14 @@ function Dashboard({
         )
       }
 
+      // The dropdown shows unread only, so remove it.
+      // It stays in the database as read.
       setNotifications(
         (currentNotifications) =>
-          currentNotifications.map(
+          currentNotifications.filter(
             (currentNotification) =>
-              currentNotification.id ===
+              currentNotification.id !==
               notification.id
-                ? data.notification
-                : currentNotification
           )
       )
 
@@ -388,7 +427,9 @@ function Dashboard({
       * Task-related notifications
       */
       if (notification.taskId) {
-        navigate('/tasks')
+        navigate(
+          `/tasks?task=${notification.taskId}`
+        )
         return
       }
 
@@ -426,21 +467,8 @@ function Dashboard({
         )
       }
 
-      const readAt =
-        new Date().toISOString()
-
-      setNotifications(
-        (currentNotifications) =>
-          currentNotifications.map(
-            (notification) => ({
-              ...notification,
-              isRead: true,
-              readAt:
-                notification.readAt ||
-                readAt,
-            })
-          )
-      )
+      // All are read now, so the unread-only dropdown is empty.
+      setNotifications([])
 
       setUnreadCount(0)
     } catch (error) {
@@ -975,6 +1003,11 @@ function Dashboard({
                 <button
                   type="button"
                   onClick={() => {
+                    // Refresh only when opening, not closing.
+                    if (!notificationsOpen) {
+                      loadNotifications()
+                    }
+
                     setNotificationsOpen(
                       (current) => !current
                     )
