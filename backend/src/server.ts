@@ -10,6 +10,7 @@ import userRoutes from './routes/users.js'
 import clientRoutes from './routes/clients.js'
 import projectRoutes from './routes/projects.js'
 import taskRoutes from './routes/tasks.js'
+import checklistRoutes from './routes/checklist.js'
 import dashboardRoutes from './routes/dashboard.js'
 import notificationRoutes from './routes/notifications.js'
 
@@ -88,6 +89,7 @@ app.use('/api/users', userRoutes)
 app.use('/api/clients', clientRoutes)
 app.use('/api/projects', projectRoutes)
 app.use('/api/tasks', taskRoutes)
+app.use('/api/tasks/:taskId/checklist', checklistRoutes)
 app.use('/api/dashboard', dashboardRoutes)
 app.use('/api/notifications', notificationRoutes)
 

@@ -103,8 +103,25 @@ model Task {
   assignedToId Int?
   assignedTo   User? @relation(fields: [assignedToId], references: [id])
 
+  checklistItems ChecklistItem[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model ChecklistItem {
+  id          Int     @id @default(autoincrement())
+  content     String
+  isCompleted Boolean @default(false)
+  position    Int
+
+  taskId Int
+  task   Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([taskId, position])
 }
 
 enum NotificationType {

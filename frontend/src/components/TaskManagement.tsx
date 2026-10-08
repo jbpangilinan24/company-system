@@ -32,6 +32,7 @@ import Modal from './ui/Modal'
 import PageHeader from './ui/PageHeader'
 import RichTextContent from './ui/RichTextContent'
 import RichTextEditor from './ui/RichTextEditor'
+import TaskChecklist from './TaskChecklist'
 
 import { toPlainText } from '../utils/richText'
 
@@ -2452,6 +2453,14 @@ function TaskManagement({
 
                 </section>
 
+                {/* CHECKLIST */}
+
+                {/* key: a different task gets a fresh checklist */}
+                <TaskChecklist
+                  key={selectedTask.id}
+                  taskId={selectedTask.id}
+                />
+
                 {/* PROJECT */}
 
                 <section className="mt-8 border-t border-slate-100 pt-6">
@@ -2551,19 +2560,7 @@ function TaskManagement({
                     More task details
                   </h3>
 
-                  <div className="mt-4 grid gap-3 sm:grid-cols-3">
-
-                    <div className="rounded-xl border border-dashed border-slate-200 p-4">
-
-                      <p className="text-sm font-medium text-slate-700">
-                        Subtasks
-                      </p>
-
-                      <p className="mt-1 text-xs leading-5 text-slate-400">
-                        Coming next
-                      </p>
-
-                    </div>
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
 
                     <div className="rounded-xl border border-dashed border-slate-200 p-4">
 
