@@ -1,8 +1,18 @@
 import { Router } from 'express'
 import { prisma } from '../prisma.js'
 import { requireAuth } from '../middleware/auth.js'
+import { sanitizeDescription } from '../utils/sanitizeDescription.js'
 
 const router = Router()
+
+// Description must be a string, null or omitted.
+function isValidDescription(description: unknown) {
+  return (
+    description === undefined ||
+    description === null ||
+    typeof description === 'string'
+  )
+}
 
 const validStatuses = [
   'TODO',
@@ -99,6 +109,12 @@ router.post(
         })
       }
 
+      if (!isValidDescription(description)) {
+        return res.status(400).json({
+          message: 'Invalid task description',
+        })
+      }
+
       // Validate project
 
       const parsedProjectId = Number(projectId)
@@ -184,7 +200,9 @@ router.post(
       const task = await prisma.task.create({
         data: {
           title: title.trim(),
-          description: description?.trim() || null,
+          description: sanitizeDescription(
+            description ?? null
+          ),
           status: status || 'TODO',
           priority: priority || 'NORMAL',
           dueDate: dueDate
@@ -303,6 +321,12 @@ router.patch(
         })
       }
 
+      if (!isValidDescription(description)) {
+        return res.status(400).json({
+          message: 'Invalid task description',
+        })
+      }
+
       // Validate status
 
       if (
@@ -409,7 +433,7 @@ router.patch(
 
           ...(description !== undefined && {
             description:
-              description?.trim() || null,
+              sanitizeDescription(description),
           }),
 
           ...(status !== undefined && {

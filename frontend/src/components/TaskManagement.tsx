@@ -30,6 +30,10 @@ import Badge from './ui/Badge'
 import Button from './ui/Button'
 import Modal from './ui/Modal'
 import PageHeader from './ui/PageHeader'
+import RichTextContent from './ui/RichTextContent'
+import RichTextEditor from './ui/RichTextEditor'
+
+import { toPlainText } from '../utils/richText'
 
 type TaskStatus =
   | 'TODO'
@@ -323,8 +327,8 @@ function TaskManagement({
         task.assignedTo?.name
           .toLowerCase()
           .includes(searchValue) ||
-        task.description
-          ?.toLowerCase()
+        toPlainText(task.description)
+          .toLowerCase()
           .includes(searchValue)
 
       const matchesProject =
@@ -1338,9 +1342,9 @@ function TaskManagement({
 
                             {task.description && (
                               <p className="mt-1 max-w-xs truncate text-sm text-slate-500">
-                                {
+                                {toPlainText(
                                   task.description
-                                }
+                                )}
                               </p>
                             )}
 
@@ -2116,32 +2120,32 @@ function TaskManagement({
 
             <div className="sm:col-span-2">
 
-              <label
-                htmlFor="task-description"
+              <p
+                id="task-description-label"
                 className="mb-1.5 block text-sm font-medium text-slate-700"
               >
                 Description
-              </label>
+              </p>
 
-              <textarea
-                id="task-description"
+              <RichTextEditor
+                labelId="task-description-label"
                 value={
                   form.description
                 }
                 onChange={(
-                  event
+                  html
                 ) =>
-                  setForm({
-                    ...form,
-                    description:
-                      event
-                        .target
-                        .value,
-                  })
+                  // Functional update: always uses the
+                  // latest form, not a stale copy.
+                  setForm(
+                    (current) => ({
+                      ...current,
+                      description:
+                        html,
+                    })
+                  )
                 }
-                rows={5}
                 placeholder="Add task details or instructions..."
-                className="w-full resize-y rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm outline-none transition placeholder:text-slate-400 focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
               />
 
             </div>
@@ -2433,10 +2437,12 @@ function TaskManagement({
                   </h3>
 
                   {selectedTask.description ? (
-                    <div className="mt-3 whitespace-pre-wrap break-words text-sm leading-7 text-slate-600">
-                      {
-                        selectedTask.description
-                      }
+                    <div className="mt-3">
+                      <RichTextContent
+                        content={
+                          selectedTask.description
+                        }
+                      />
                     </div>
                   ) : (
                     <div className="mt-3 rounded-xl border border-dashed border-slate-200 px-4 py-5 text-sm text-slate-400">
